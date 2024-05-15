@@ -9,6 +9,7 @@ import Error from "./Error/Error";
 import StartScreen from "./StartScreen/StartScreen";
 import Question from "./Question/Question";
 import NextQuestions from "./NextQuestions/NextQuestions";
+import Progress from "./Progress/Progress";
 
 const initialState = {
   questions: [],
@@ -37,7 +38,7 @@ function reducer(state, action) {
         ...state,
         answer: action.payload,
         points:
-          action.payload === question.currentOption
+          action.payload === question.correctOption
             ? state.points + question.points
             : question.points,
       };
@@ -53,12 +54,16 @@ function reducer(state, action) {
 }
 
 function App() {
-  const [{ questions, status, index, answer }, dispatch] = useReducer(
+  const [{ questions, status, index, answer, points }, dispatch] = useReducer(
     reducer,
     initialState
   );
 
-  const numQuestion = questions.length;
+  const numQuestions = questions.length;
+  const maxPossiblePoints = questions.reduce(
+    (prev, cur) => prev + cur.points,
+    0
+  );
 
   useEffect(function () {
     fetch("http://localhost:7000/questions")
@@ -76,16 +81,22 @@ function App() {
         {status === "loading" && <Loader />}
         {status === "error" && <Error />}
         {status === "ready" && (
-          <StartScreen numQuestion={numQuestion} dispatch={dispatch} />
+          <StartScreen numQuestions={numQuestions} dispatch={dispatch} />
         )}
         {status === "active" && (
           <>
+            <Progress
+              index={index}
+              numQuestions={numQuestions}
+              maxPossiblePoints={maxPossiblePoints}
+              points={points}
+              answer={answer}
+            />
             <Question
-              questions={questions[index]}
+              question={questions[index]}
               dispatch={dispatch}
               answer={answer}
             />
-            <NextQuestions dispatch={dispatch} answer={answer} />
             <NextQuestions dispatch={dispatch} answer={answer} />
           </>
         )}
